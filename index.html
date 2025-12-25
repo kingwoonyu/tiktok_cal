@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TikTok Shop 全球定价计算器 (V5.1 逻辑全同步版)</title>
+    <style>
+        :root {
+            --primary: #00f2ea;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #343a40;
+            --text-muted: #5d6d7e;
+            --success: #28a745;
+            --readonly-bg: #f0f2f5;
+            --border-radius: 10px;
+        }
+
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            background-color: #343a40;
+            color: white;
+            padding: 15px 20px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-title { font-weight: bold; font-size: 15px; }
+
+        select {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #555;
+            outline: none;
+            background: #fff;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 12px;
+            font-size: 14px;
+            border-left: 4px solid var(--primary);
+            padding-left: 8px;
+            color: #333;
+        }
+
+        .usa-method-box {
+            background-color: #fffde7;
+            border: 1px solid #ffe58f;
+            border-radius: var(--border-radius);
+            padding: 12px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 8px;
+        }
+
+        .row label {
+            flex: 1;
+            font-size: 13px;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            padding: 6px 10px;
+            width: 60%;
+        }
+
+        .input-group.readonly {
+            background-color: var(--readonly-bg);
+        }
+
+        .input-group input {
+            width: 100%;
+            border: none;
+            outline: none;
+            text-align: right;
+            font-size: 14px;
+            background: transparent;
+        }
+
+        .symbol {
+            font-size: 12px;
+            margin-left: 6px;
+            color: #888;
+            min-width: 20px;
+        }
+
+        .dim-box {
+            display: flex;
+            gap: 5px;
+            width: 60%;
+        }
+        .dim-box input {
+            width: 33%;
+            padding: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .margin-box {
+            background-color: var(--readonly-bg);
+            padding: 12px;
+            border-radius: var(--border-radius);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .result-highlight {
+            color: var(--success);
+            font-weight: bold;
+            font-family: 'Consolas', monospace;
+            font-size: 16px;
+        }
+
+        .btn-calc {
+            width: 100%;
+            background-color: var(--primary);
+            color: #000;
+            border: none;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            font-weight: bold;
+            font-size: 16px;
+            margin: 10px 0 25px 0;
+            cursor: pointer;
+            box-shadow: 0 4px 0px #00d2cc;
+        }
+
+        .notes-box {
+            background-color: #eff3f6;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            font-size: 12px;
+            color: #5d6d7e;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+
+        .notes-title {
+            color: #2c3e50;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-title">TikTok Shop 全球定价计算器</div>
+    <select id="countrySelect" onchange="initUI()">
+        <option value="美国">美国</option>
+        <option value="马来西亚">马来西亚</option>
+        <option value="英国">英国</option>
+        <option value="菲律宾">菲律宾</option>
+        <option value="泰国">泰国</option>
+        <option value="越南">越南</option>
+        <option value="新加坡">新加坡</option>
+    </select>
+</header>
+
+<div class="container">
+    <div id="usaMethodContainer" class="usa-method-box">
+        <label style="font-size: 13px; font-weight: bold;">发货方式:</label>
+        <select id="usaMethod" onchange="initUI()" style="width: 65%;">
+            <option value="海外本地仓">海外本地仓</option>
+            <option value="海外本地仓（供应链）">海外本地仓（供应链）</option>
+            <option value="跨境自发货（虚拟仓）">跨境自发货（虚拟仓）</option>
+        </select>
+    </div>
+
+    <div class="card">
+        <div class="section-title">基本信息</div>
+        <div class="row">
+            <label>汇率 (1 <span class="curr-symbol">$</span> = ? CNY)</label>
+            <div class="input-group"><input type="number" id="rate" step="0.0001"></div>
+        </div>
+        <div class="row">
+            <label>成本价 (CNY)</label>
+            <div class="input-group"><input type="number" id="costCny" value="10.00"><span class="symbol">¥</span></div>
+        </div>
+        <div class="row">
+            <label>销售定价 (CNY)</label>
+            <div class="input-group"><input type="number" id="sellCny" value="100.00"><span class="symbol">¥</span></div>
+        </div>
+    </div>
+
+    <div id="dynamicFields"></div>
+
+    <div class="card">
+        <div class="section-title">计算结果</div>
+        <div class="row">
+            <label>销售收入 (CNY)</label>
+            <div class="input-group readonly"><input type="text" id="resRev" readonly><span class="symbol">¥</span></div>
+        </div>
+        <div class="row">
+            <label>毛利 (CNY)</label>
+            <div class="input-group readonly"><input type="text" id="resProfit" readonly><span class="symbol">¥</span></div>
+        </div>
+        <div class="margin-box">
+            <span style="font-size: 13px;">毛利率:</span>
+            <span id="resMargin" class="result-highlight">0.00 %</span>
+        </div>
+    </div>
+
+    <button class="btn-calc" onclick="calculate()">执行计算</button>
+
+    <div class="notes-box">
+        <div class="notes-title" id="noteTitle">【注释】</div>
+        <div id="noteContent"></div>
+    </div>
+</div>
+
+<script>
+    const configs = {
+        "美国": {symbol: "$", rate: 7.0465, mode: "USA", fixed_cb: null},
+        "马来西亚": {symbol: "RM", rate: 1.72793, mode: "SEA", fixed_cb: 3.25},
+        "英国": {symbol: "£", rate: 9.4787, mode: "SEA", fixed_cb: 8.34},
+        "菲律宾": {symbol: "₱", rate: 0.1197, mode: "SEA", fixed_cb: 6.74},
+        "泰国": {symbol: "฿", rate: 0.2261, mode: "SEA", fixed_cb: 2.83},
+        "越南": {symbol: "₫", rate: 0.000269, mode: "SEA", fixed_cb: 3.03},
+        "新加坡": {symbol: "S$", rate: 5.4662, mode: "SEA", fixed_cb: 10}
+    };
+
+    function initUI() {
+        const country = document.getElementById('countrySelect').value;
+        const method = document.getElementById('usaMethod').value;
+        const conf = configs[country];
+        
+        document.querySelectorAll('.curr-symbol').forEach(el => el.innerText = conf.symbol);
+        document.getElementById('rate').value = conf.rate;
+        document.getElementById('usaMethodContainer').style.display = (country === "美国") ? "flex" : "none";
+
+        const fields = document.getElementById('dynamicFields');
+        let html = '';
+
+        if (country === "美国") {
+            html += `<div class="card"><div class="section-title">销售成本 (US)</div>
+                    <div class="row"><label>达人佣金率 (%)</label><div class="input-group"><input type="number" id="usa_comm_rate" value="20.00"></div></div>
+                    <div class="row"><label>其他销售费用</label><div class="input-group"><input type="number" id="usa_other_s" value="10.00"><span class="symbol">¥</span></div></div></div>
+                    <div class="card"><div class="section-title">物流成本 (US)</div>`;
+            
+            if (method === "跨境自发货（虚拟仓）") {
+                html += renderDimWeightUI(); // 美国虚拟仓显示计费重量
+                html += `<div class="row"><label>包材成本</label><div class="input-group"><input type="number" id="u_pkg" value="10.00"><span class="symbol">¥</span></div></div>
+                         <div class="row"><label>运费单价/KG</label><div class="input-group"><input type="number" id="u_rate_kg" value="10.00"><span class="symbol">¥</span></div></div>
+                         <div class="row"><label>其它物流费用</label><div class="input-group"><input type="number" id="u_other_l" value="10.00"><span class="symbol">¥</span></div></div>`;
+            } else if (method === "海外本地仓（供应链）") {
+                html += `<div class="row"><label>其它物流费用</label><div class="input-group"><input type="number" id="u_other_l" value="10.00"><span class="symbol">¥</span></div></div>`;
+            } else {
+                html += `<div class="row"><label>头程运费</label><div class="input-group"><input type="number" id="u_log1" value="10.00"><span class="symbol">¥</span></div></div>
+                         <div class="row"><label>尾程运费</label><div class="input-group"><input type="number" id="u_log2" value="10.00"><span class="symbol">¥</span></div></div>
+                         <div class="row"><label>海外仓服务费</label><div class="input-group"><input type="number" id="u_log3" value="10.00"><span class="symbol">¥</span></div></div>
+                         <div class="row"><label>其它物流费用</label><div class="input-group"><input type="number" id="u_other_l" value="10.00"><span class="symbol">¥</span></div></div>`;
+            }
+            html += `</div>`;
+        } else {
+            // 东南亚和英国国家
+            html += `<div class="card"><div class="section-title">销售与物流成本</div>`;
+            html += renderDimWeightUI(); // 东南亚国家显示计费重量
+            html += `<div class="row"><label>包材成本</label><div class="input-group"><input type="number" id="sea_pkg" value="3.00"><span class="symbol">¥</span></div></div>
+                     <div class="row"><label>国内运费(尾程)</label><div class="input-group"><input type="number" id="sea_dom" value="10.00"><span class="symbol">¥</span></div></div>
+                     <div class="row"><label>跨境物流费(头程)</label><div class="input-group ${conf.fixed_cb ? 'readonly' : ''}"><input type="number" id="sea_cb" value="${conf.fixed_cb || 5.00}" ${conf.fixed_cb ? 'readonly' : ''}><span class="symbol">¥</span></div></div>
+                     <div class="row"><label>佣金比例 (%)</label><div class="input-group"><input type="number" id="sea_comm" value="10.00"></div></div>
+                     <div class="row"><label>手续费率 (%)</label><div class="input-group"><input type="number" id="sea_fee" value="10.00"></div></div></div>`;
+        }
+        fields.innerHTML = html;
+        updateNotes(country, method);
+    }
+
+    function renderDimWeightUI() {
+        return `<div class="row"><label>长x宽x高(cm)</label><div class="dim-box">
+                    <input type="number" id="dimL" value="10" placeholder="长">
+                    <input type="number" id="dimW" value="10" placeholder="宽">
+                    <input type="number" id="dimH" value="10" placeholder="高">
+                </div></div>
+                <div class="row"><label>实重 (g)</label><div class="input-group"><input type="number" id="weight" value="100"></div></div>
+                <div class="row"><label>计费重量 (g)</label><div class="input-group readonly"><input type="text" id="billWeight" readonly placeholder="自动计算"></div></div>`;
+    }
+
+    function updateNotes(country, method) {
+        let title = ""; let text = "";
+        if (country === "美国") {
+            if (method === "海外本地仓") {
+                title = "【美国的海外本地仓注释】";
+                text = "成本价：进货价\n销售定价：TikTok Shop显示的价格\n各项手续费-平台抽佣：销售价*6%\n其他销售费用：可包括税费VAT、汇损、货损等，按实际情况填写\n其它物流费用：可包括挂号费、海外本地仓综合服务费等\n毛利：销售定价 - 销售成本 - 物流成本 - 产品成本\n毛利率：毛利/销售定价，一般建议尽量保持在 40% 以上，可以兼顾利润和促销活动空间";
+            } else if (method === "海外本地仓（供应链）") {
+                title = "【美国的海外本地仓（供应链）注释】";
+                text = "成本价：进货价\n销售定价：TikTok Shop显示的价格\n各项手续费-平台抽佣：销售价*6%\n其他销售费用：可包括税费VAT、汇损、货损等，按实际情况填写\n其它物流费用：供应链综合物流费用（含头程/尾程等）\n毛利：销售定价 - 销售成本 - 物流成本 - 产品成本\n毛利率：毛利/销售定价，建议 40% 以上";
+            } else {
+                title = "【美国的跨境自发货（虚拟仓）注释】";
+                text = "成本价：进货价\n销售定价：TikTok Shop显示的价格\n各项手续费-平台抽佣：销售价*6%\n其他销售费用：可包括税费VAT、汇损、货损等，按实际情况填写\n计费重量：取体积重和实重更大的值\n包材成本：快递包装成本\n运费单价/KG：每公斤运费单价\n其它物流费用：可包括挂号费、海外本地仓综合服务费等\n毛利：销售定价 - 销售成本 - 物流成本 - 产品成本\n毛利率：毛利/销售定价，一般建议尽量保持在 40% 以上，可以兼顾利润和促销活动空间";
+            }
+        } else {
+            title = `【${country} 跨境模式注释】`;
+            text = "成本价：进货价\n销售定价：TikTok Shop显示的价格\n计费重量：取体积重和实重更大的值\n包材成本：快递货代包装成本\n佣金比例：可填写包括达人佣金在内的所有佣金项\n手续费率：可包括税费VAT+小店手续费+汇损、提现、货损等，按实际情况填写\n毛利：销售定价 - 销售成本 - 物流成本 - 产品成本\n毛利率：毛利/销售定价，一般建议尽量保持在 40% 以上，可以兼顾利润和促销活动空间";
+        }
+        document.getElementById('noteTitle').innerText = title;
+        document.getElementById('noteContent').innerText = text;
+    }
+
+    function calculate() {
+        try {
+            const country = document.getElementById('countrySelect').value;
+            const method = document.getElementById('usaMethod').value;
+            const rate = parseFloat(document.getElementById('rate').value);
+            const sellCny = parseFloat(document.getElementById('sellCny').value) || 0;
+            const costCny = parseFloat(document.getElementById('costCny').value) || 0;
+            
+            let totalCostCny = 0;
+
+            if (country === "美国") {
+                const comm = sellCny * (parseFloat(document.getElementById('usa_comm_rate').value) / 100);
+                const plat = sellCny * 0.06;
+                const withd = sellCny * 0.0022;
+                const otherS = parseFloat(document.getElementById('usa_other_s').value) || 0;
+                
+                let logCny = 0;
+                if (method === "跨境自发货（虚拟仓）") {
+                    const l = parseFloat(document.getElementById('dimL').value) || 0;
+                    const w = parseFloat(document.getElementById('dimW').value) || 0;
+                    const h = parseFloat(document.getElementById('dimH').value) || 0;
+                    const actW = parseFloat(document.getElementById('weight').value) || 0;
+                    const billW = Math.max(actW, (l*w*h)/8);
+                    document.getElementById('billWeight').value = billW.toFixed(2);
+                    logCny = (parseFloat(document.getElementById('u_pkg').value) || 0) + 
+                             ((parseFloat(document.getElementById('u_rate_kg').value) || 0) * (billW/1000)) + 
+                             (parseFloat(document.getElementById('u_other_l').value) || 0);
+                } else if (method === "海外本地仓（供应链）") {
+                    logCny = parseFloat(document.getElementById('u_other_l').value) || 0;
+                } else {
+                    logCny = (parseFloat(document.getElementById('u_log1').value) || 0) + 
+                             (parseFloat(document.getElementById('u_log2').value) || 0) + 
+                             (parseFloat(document.getElementById('u_log3').value) || 0) + 
+                             (parseFloat(document.getElementById('u_other_l').value) || 0);
+                }
+                totalCostCny = comm + plat + withd + otherS + logCny;
+            } else {
+                const l = parseFloat(document.getElementById('dimL').value) || 0;
+                const w = parseFloat(document.getElementById('dimW').value) || 0;
+                const h = parseFloat(document.getElementById('dimH').value) || 0;
+                const actW = parseFloat(document.getElementById('weight').value) || 0;
+                const billW = Math.max(actW, (l*w*h)/8);
+                document.getElementById('billWeight').value = billW.toFixed(2);
+                const commP = sellCny * (parseFloat(document.getElementById('sea_comm').value) / 100);
+                const feeP = sellCny * (parseFloat(document.getElementById('sea_fee').value) / 100);
+                totalCostCny = (parseFloat(document.getElementById('sea_pkg').value) || 0) + 
+                               (parseFloat(document.getElementById('sea_dom').value) || 0) + 
+                               (parseFloat(document.getElementById('sea_cb').value) || 0) + 
+                               commP + feeP;
+            }
+
+            const profitCny = sellCny - costCny - totalCostCny;
+            const revCny = sellCny - totalCostCny;
+            const margin = (sellCny !== 0) ? (profitCny / sellCny * 100) : 0;
+
+            document.getElementById('resRev').value = revCny.toFixed(2);
+            document.getElementById('resProfit').value = profitCny.toFixed(2);
+            document.getElementById('resMargin').innerText = margin.toFixed(2) + " %";
+
+        } catch (e) {
+            alert("计算错误，请检查数字输入是否完整");
+        }
+    }
+
+    window.onload = initUI;
+</script>
+
+</body>
+</html>
