@@ -2,22 +2,30 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TikTok Shop 全球定价计算器 (V5.1 逻辑全同步版)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>TikTok Shop 全球定价计算器 (V6.0 实时汇率版 | 跨境物流费单位:人民币)</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
         :root {
             --primary: #00f2ea;
+            --primary-dark: #00d2cc;
             --bg-color: #f8f9fa;
             --card-bg: #ffffff;
             --text-main: #343a40;
             --text-muted: #5d6d7e;
             --success: #28a745;
+            --danger: #dc3545;
             --readonly-bg: #f0f2f5;
-            --border-radius: 10px;
+            --border-radius: 12px;
+            --shadow-sm: 0 2px 6px rgba(0,0,0,0.04);
+            --border-light: #e9ecef;
         }
 
         body {
-            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            font-family: 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
             margin: 0;
@@ -25,13 +33,14 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            line-height: 1.4;
         }
 
-        header {
+        .app-header {
             width: 100%;
             background-color: #343a40;
             color: white;
-            padding: 15px 20px;
+            padding: 12px 20px;
             box-sizing: border-box;
             display: flex;
             justify-content: space-between;
@@ -39,77 +48,125 @@
             position: sticky;
             top: 0;
             z-index: 100;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        .header-title { font-weight: bold; font-size: 15px; }
+        .header-title {
+            font-weight: bold;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+        }
+
+        .country-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .country-selector label {
+            font-size: 13px;
+            color: #ddd;
+        }
 
         select {
-            padding: 8px;
-            border-radius: 5px;
-            border: 1px solid #555;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: none;
             outline: none;
             background: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
         }
 
         .container {
             width: 100%;
-            max-width: 500px;
-            padding: 15px;
+            max-width: 560px;
+            margin: 0 auto;
+            padding: 16px 16px 30px 16px;
             box-sizing: border-box;
         }
 
         .card {
             background: var(--card-bg);
             border-radius: var(--border-radius);
-            padding: 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            padding: 18px 16px;
+            margin-bottom: 18px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-light);
         }
 
         .section-title {
-            font-weight: bold;
-            margin-bottom: 12px;
-            font-size: 14px;
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 14px;
             border-left: 4px solid var(--primary);
-            padding-left: 8px;
-            color: #333;
+            padding-left: 12px;
+            color: #1e2a3a;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .usa-method-box {
+        .method-bar {
             background-color: #fffde7;
             border: 1px solid #ffe58f;
             border-radius: var(--border-radius);
-            padding: 12px;
-            margin-bottom: 15px;
+            padding: 12px 16px;
+            margin-bottom: 18px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .method-bar span {
+            font-weight: 600;
+            font-size: 13px;
+            color: #7d5d00;
+        }
+
+        .method-bar select {
+            width: 220px;
+            border: 1px solid #ffd966;
+            background: white;
         }
 
         .row {
             display: flex;
             align-items: center;
-            margin-bottom: 10px;
-            gap: 8px;
+            margin-bottom: 14px;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .row label {
-            flex: 1;
+            flex: 0 0 130px;
             font-size: 13px;
+            font-weight: 500;
+            color: #2c3e50;
         }
 
         .input-group {
+            flex: 1;
             display: flex;
             align-items: center;
             background: white;
-            border: 1px solid #ddd;
+            border: 1px solid #dee2e6;
             border-radius: var(--border-radius);
-            padding: 6px 10px;
-            width: 60%;
+            padding: 8px 12px;
+            transition: 0.2s;
+        }
+
+        .input-group:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0,242,234,0.2);
         }
 
         .input-group.readonly {
             background-color: var(--readonly-bg);
+            border-color: #e2e8f0;
         }
 
         .input-group input {
@@ -119,304 +176,545 @@
             text-align: right;
             font-size: 14px;
             background: transparent;
+            font-family: 'Consolas', monospace;
+        }
+
+        .input-group input[readonly] {
+            cursor: default;
         }
 
         .symbol {
             font-size: 12px;
-            margin-left: 6px;
-            color: #888;
-            min-width: 20px;
+            margin-left: 8px;
+            color: #6c757d;
+            font-weight: 500;
+            min-width: 22px;
         }
 
         .dim-box {
+            flex: 1;
             display: flex;
-            gap: 5px;
-            width: 60%;
+            gap: 8px;
         }
         .dim-box input {
             width: 33%;
-            padding: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            padding: 8px 0;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
             text-align: center;
             font-size: 13px;
+            background: white;
+        }
+        .dim-box input:focus {
+            border-color: var(--primary);
+            outline: none;
         }
 
-        .margin-box {
-            background-color: var(--readonly-bg);
-            padding: 12px;
-            border-radius: var(--border-radius);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 10px;
+        .rate-row {
+            background-color: #f1f9ff;
+            border-radius: 12px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+        }
+        .rate-status {
+            font-size: 10px;
+            margin-left: 12px;
+            color: #2c7da0;
+        }
+        .fetch-btn {
+            background-color: #e9ecef;
+            border: none;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.2s;
+            margin-left: 8px;
+        }
+        .fetch-btn:hover {
+            background-color: #d4d9e0;
         }
 
         .result-highlight {
             color: var(--success);
-            font-weight: bold;
+            font-weight: 800;
             font-family: 'Consolas', monospace;
-            font-size: 16px;
+            font-size: 18px;
+        }
+
+        .margin-box {
+            background-color: #f0f7f0;
+            border-radius: var(--border-radius);
+            padding: 12px 16px;
+            margin-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
         }
 
         .btn-calc {
             width: 100%;
             background-color: var(--primary);
-            color: #000;
+            color: #1e2a3a;
             border: none;
-            padding: 15px;
-            border-radius: var(--border-radius);
-            font-weight: bold;
+            padding: 14px;
+            border-radius: 40px;
+            font-weight: 800;
             font-size: 16px;
-            margin: 10px 0 25px 0;
+            margin: 12px 0 20px 0;
             cursor: pointer;
-            box-shadow: 0 4px 0px #00d2cc;
+            transition: 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            letter-spacing: 2px;
+        }
+
+        .btn-calc:active {
+            transform: scale(0.98);
+            background-color: var(--primary-dark);
         }
 
         .notes-box {
             background-color: #eff3f6;
-            border-radius: var(--border-radius);
-            padding: 15px;
+            border-radius: 16px;
+            padding: 16px;
             font-size: 12px;
-            color: #5d6d7e;
-            line-height: 1.8;
+            color: #2c3e50;
+            line-height: 1.65;
             white-space: pre-wrap;
+            border-left: 3px solid var(--primary);
         }
 
         .notes-title {
-            color: #2c3e50;
-            font-weight: bold;
-            margin-bottom: 8px;
+            font-weight: 800;
             font-size: 13px;
+            margin-bottom: 8px;
+            color: #1f3a4b;
+        }
+
+        .inline-tip {
+            font-size: 10px;
+            color: #6c757d;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        hr {
+            margin: 8px 0;
+            border-color: #e9ecef;
         }
     </style>
 </head>
 <body>
-    
+
 <div class="top-banner">
     电商服务咨询 <span>QQ：2632409710</span>
 </div>
     
-<header>
-    <div class="header-title">TikTok Shop 全球定价计算器</div>
-    <select id="countrySelect" onchange="initUI()">
-        <option value="美国">美国</option>
-        <option value="马来西亚">马来西亚</option>
-        <option value="英国">英国</option>
-        <option value="菲律宾">菲律宾</option>
-        <option value="泰国">泰国</option>
-        <option value="越南">越南</option>
-        <option value="新加坡">新加坡</option>
-    </select>
+<header class="app-header">
+    <div class="header-title">TikTok Shop 全球定价计算器 <span style="font-size:11px;">V6.0 实时汇率版</span></div>
+    <div class="country-selector">
+        <label>切换国家</label>
+        <select id="countrySelect">
+            <option value="美国">美国</option>
+            <option value="马来西亚">马来西亚</option>
+            <option value="英国">英国</option>
+            <option value="菲律宾">菲律宾</option>
+            <option value="泰国">泰国</option>
+            <option value="越南">越南</option>
+            <option value="新加坡">新加坡</option>
+        </select>
+    </div>
 </header>
 
 <div class="container">
-    <div id="usaMethodContainer" class="usa-method-box">
-        <label style="font-size: 13px; font-weight: bold;">发货方式:</label>
-        <select id="usaMethod" onchange="initUI()" style="width: 65%;">
-            <option value="海外本地仓">海外本地仓</option>
-            <option value="海外本地仓（供应链）">海外本地仓（供应链）</option>
-            <option value="跨境自发货（虚拟仓）">跨境自发货（虚拟仓）</option>
-        </select>
+    <!-- 美国发货方式专用区域 (动态显示/隐藏) -->
+    <div id="usaMethodContainer" style="display: none;">
+        <div class="method-bar">
+            <span>📦 发货方式</span>
+            <select id="usaMethodSelect">
+                <option value="海外本地仓">海外本地仓</option>
+                <option value="海外本地仓（供应链）">海外本地仓（供应链）</option>
+                <option value="跨境自发货（虚拟仓）">跨境自发货（虚拟仓）</option>
+            </select>
+        </div>
     </div>
 
+    <!-- 基本信息卡片 (含实时汇率) -->
     <div class="card">
-        <div class="section-title">基本信息</div>
-        <div class="row">
-            <label>汇率 (1 <span class="curr-symbol">$</span> = ? CNY)</label>
-            <div class="input-group"><input type="number" id="rate" step="0.0001"></div>
+        <div class="section-title">📊 基本信息</div>
+        <div class="row rate-row">
+            <label style="flex:0 0 auto;">实时汇率 <span id="localCurrencyLabel">($)</span> → CNY</label>
+            <div class="input-group" style="flex:0.7;">
+                <input type="text" id="rateInput" step="0.000001" value="7.0465" readonly style="background:#f8f9fa; color:#0b5e2e; font-weight:bold;">
+                <span class="symbol"></span>
+            </div>
+            <button id="fetchRateBtn" class="fetch-btn">🔄 获取最新汇率</button>
+            <div id="rateStatusMsg" class="rate-status">⚙️ 默认汇率</div>
         </div>
         <div class="row">
             <label>成本价 (CNY)</label>
-            <div class="input-group"><input type="number" id="costCny" value="10.00"><span class="symbol">¥</span></div>
+            <div class="input-group"><input type="number" id="costCny" value="10.00" step="0.01"><span class="symbol">¥</span></div>
         </div>
         <div class="row">
             <label>销售定价 (CNY)</label>
-            <div class="input-group"><input type="number" id="sellCny" value="100.00"><span class="symbol">¥</span></div>
+            <div class="input-group"><input type="number" id="sellCny" value="100.00" step="0.01"><span class="symbol">¥</span></div>
         </div>
     </div>
 
+    <!-- 动态渲染区域: 销售成本/物流成本/跨境字段 -->
     <div id="dynamicFields"></div>
 
+    <!-- 计算结果卡片 -->
     <div class="card">
-        <div class="section-title">计算结果</div>
+        <div class="section-title">💰 计算结果</div>
         <div class="row">
             <label>销售收入 (CNY)</label>
-            <div class="input-group readonly"><input type="text" id="resRev" readonly><span class="symbol">¥</span></div>
+            <div class="input-group readonly"><input type="text" id="resRevenue" readonly placeholder="0.00"><span class="symbol">¥</span></div>
         </div>
         <div class="row">
             <label>毛利 (CNY)</label>
-            <div class="input-group readonly"><input type="text" id="resProfit" readonly><span class="symbol">¥</span></div>
+            <div class="input-group readonly"><input type="text" id="resProfit" readonly placeholder="0.00"><span class="symbol">¥</span></div>
         </div>
         <div class="margin-box">
-            <span style="font-size: 13px;">毛利率:</span>
+            <span style="font-weight: 600;">📈 毛利率</span>
             <span id="resMargin" class="result-highlight">0.00 %</span>
         </div>
     </div>
 
-    <button class="btn-calc" onclick="calculate()">执行计算</button>
+    <button class="btn-calc" id="calcBtn">⚡ 执行计算</button>
 
-    <div class="notes-box">
-        <div class="notes-title" id="noteTitle">【注释】</div>
-        <div id="noteContent"></div>
+    <!-- 动态注释区域 -->
+    <div class="notes-box" id="notesPanel">
+        <div class="notes-title" id="noteTitle">【提示】</div>
+        <div id="noteContent">选择国家后显示详细说明</div>
     </div>
 </div>
 
 <script>
-    const configs = {
-        "美国": {symbol: "$", rate: 7.0465, mode: "USA", fixed_cb: null},
-        "马来西亚": {symbol: "RM", rate: 1.72793, mode: "SEA", fixed_cb: 3.25},
-        "英国": {symbol: "£", rate: 9.4787, mode: "SEA", fixed_cb: 8.34},
-        "菲律宾": {symbol: "₱", rate: 0.1197, mode: "SEA", fixed_cb: 6.74},
-        "泰国": {symbol: "฿", rate: 0.2261, mode: "SEA", fixed_cb: 2.83},
-        "越南": {symbol: "₫", rate: 0.000269, mode: "SEA", fixed_cb: 3.03},
-        "新加坡": {symbol: "S$", rate: 5.4662, mode: "SEA", fixed_cb: 10}
+    // ----- 完整配置 (含汇率基准、运费公式、体积因子、国家模式) -----
+    const COUNTRY_CONFIG = {
+        "美国": { symbol: "$", currency_code: "USD", rate: 7.0465, mode: "USA", volumetric_factor: 8000, shipping_formula: null },
+        "马来西亚": { symbol: "RM", currency_code: "MYR", rate: 1.72793, mode: "SEA", volumetric_factor: 8000, shipping_formula: { type: "linear", divisor: 10, coefficient: 0.15 } },
+        "英国": { symbol: "£", currency_code: "GBP", rate: 9.4787, mode: "SEA", volumetric_factor: 8000, shipping_formula: { type: "linear", divisor: 10, coefficient: 0.07 } },
+        "菲律宾": { symbol: "₱", currency_code: "PHP", rate: 0.1197, mode: "SEA", volumetric_factor: 8000, shipping_formula: { type: "linear", divisor: 10, coefficient: 4.5 } },
+        "泰国": { symbol: "฿", currency_code: "THB", rate: 0.2261, mode: "SEA", volumetric_factor: 8000, shipping_formula: { type: "linear", divisor: 10, coefficient: 1.0 } },
+        "越南": { symbol: "₫", currency_code: "VND", rate: 0.000269, mode: "SEA", volumetric_factor: 8000, shipping_formula: { type: "linear", divisor: 10, coefficient: 900 } },
+        "新加坡": { symbol: "S$", currency_code: "SGD", rate: 5.4662, mode: "SEA", volumetric_factor: 8000, shipping_formula: { type: "tiered", first_weight: 50, first_price: 0.7, extra_per_10g: 0.15, unit: 10 } }
     };
 
-    function initUI() {
-        const country = document.getElementById('countrySelect').value;
-        const method = document.getElementById('usaMethod').value;
-        const conf = configs[country];
-        
-        document.querySelectorAll('.curr-symbol').forEach(el => el.innerText = conf.symbol);
-        document.getElementById('rate').value = conf.rate;
-        document.getElementById('usaMethodContainer').style.display = (country === "美国") ? "flex" : "none";
+    let currentCountry = "美国";
+    let currentUsaMethod = "海外本地仓";
 
-        const fields = document.getElementById('dynamicFields');
-        let html = '';
+    // DOM 元素
+    const countrySelect = document.getElementById('countrySelect');
+    const usaMethodContainer = document.getElementById('usaMethodContainer');
+    const usaMethodSelect = document.getElementById('usaMethodSelect');
+    const rateInput = document.getElementById('rateInput');
+    const rateStatusMsg = document.getElementById('rateStatusMsg');
+    const fetchBtn = document.getElementById('fetchRateBtn');
+    const dynamicFieldsDiv = document.getElementById('dynamicFields');
+    const calcBtn = document.getElementById('calcBtn');
+    const localCurrencyLabel = document.getElementById('localCurrencyLabel');
 
-        if (country === "美国") {
-            html += `<div class="card"><div class="section-title">销售成本 (US)</div>
-                    <div class="row"><label>达人佣金率 (%)</label><div class="input-group"><input type="number" id="usa_comm_rate" value="20.00"></div></div>
-                    <div class="row"><label>其他销售费用</label><div class="input-group"><input type="number" id="usa_other_s" value="10.00"><span class="symbol">¥</span></div></div></div>
-                    <div class="card"><div class="section-title">物流成本 (US)</div>`;
-            
-            if (method === "跨境自发货（虚拟仓）") {
-                html += renderDimWeightUI(); // 美国虚拟仓显示计费重量
-                html += `<div class="row"><label>包材成本</label><div class="input-group"><input type="number" id="u_pkg" value="10.00"><span class="symbol">¥</span></div></div>
-                         <div class="row"><label>运费单价/KG</label><div class="input-group"><input type="number" id="u_rate_kg" value="10.00"><span class="symbol">¥</span></div></div>
-                         <div class="row"><label>其它物流费用</label><div class="input-group"><input type="number" id="u_other_l" value="10.00"><span class="symbol">¥</span></div></div>`;
-            } else if (method === "海外本地仓（供应链）") {
-                html += `<div class="row"><label>其它物流费用</label><div class="input-group"><input type="number" id="u_other_l" value="10.00"><span class="symbol">¥</span></div></div>`;
+    function updateRateUI(rate, statusText) {
+        if (rate && rate > 0) {
+            rateInput.value = rate.toFixed(6);
+            rateStatusMsg.innerText = statusText || "✅ 汇率已更新";
+            rateStatusMsg.style.color = "#2c7da0";
+        } else {
+            rateStatusMsg.innerText = statusText || "⚠️ 获取失败，使用默认值";
+            rateStatusMsg.style.color = "#dc3545";
+        }
+    }
+
+    async function fetchExchangeRate() {
+        const currencyCode = COUNTRY_CONFIG[currentCountry].currency_code;
+        if (!currencyCode) return;
+        fetchBtn.disabled = true;
+        fetchBtn.innerText = "获取中...";
+        rateStatusMsg.innerText = "⏳ 请求实时汇率...";
+        try {
+            const url = `https://api.exchangerate-api.com/v4/latest/CNY`;
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data && data.rates && data.rates[currencyCode]) {
+                const rateCnyToTarget = data.rates[currencyCode];
+                const rate = 1 / rateCnyToTarget;
+                COUNTRY_CONFIG[currentCountry].rate = rate;
+                updateRateUI(rate, `✅ 更新自 exchangerate-api (${new Date().toLocaleTimeString()})`);
+                if (document.getElementById('sellCny') && document.getElementById('sellCny').value) calculateAll();
             } else {
-                html += `<div class="row"><label>头程运费</label><div class="input-group"><input type="number" id="u_log1" value="10.00"><span class="symbol">¥</span></div></div>
-                         <div class="row"><label>尾程运费</label><div class="input-group"><input type="number" id="u_log2" value="10.00"><span class="symbol">¥</span></div></div>
-                         <div class="row"><label>海外仓服务费</label><div class="input-group"><input type="number" id="u_log3" value="10.00"><span class="symbol">¥</span></div></div>
-                         <div class="row"><label>其它物流费用</label><div class="input-group"><input type="number" id="u_other_l" value="10.00"><span class="symbol">¥</span></div></div>`;
+                throw new Error("汇率字段缺失");
+            }
+        } catch (err) {
+            console.warn(err);
+            try {
+                const fallbackUrl = "https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/cny.json";
+                const resp = await fetch(fallbackUrl);
+                const fallbackData = await resp.json();
+                const targetLow = currencyCode.toLowerCase();
+                if (fallbackData && fallbackData.cny && fallbackData.cny[targetLow]) {
+                    const rateCnyToTarget = fallbackData.cny[targetLow];
+                    const rate = 1 / rateCnyToTarget;
+                    COUNTRY_CONFIG[currentCountry].rate = rate;
+                    updateRateUI(rate, `✅ 备用API更新成功`);
+                    if (document.getElementById('sellCny')) calculateAll();
+                } else {
+                    throw new Error("备用API无数据");
+                }
+            } catch (fallbackErr) {
+                updateRateUI(null, "❌ 汇率获取失败，继续使用原有默认值");
+            }
+        } finally {
+            fetchBtn.disabled = false;
+            fetchBtn.innerText = "🔄 获取最新汇率";
+        }
+    }
+
+    function calcVolumetricWeight(l, w, h, factor) {
+        if (!l || !w || !h) return 0;
+        const volKg = (l * w * h) / factor;
+        return volKg * 1000;
+    }
+
+    function calcShippingLocal(billWeightG, countryConf) {
+        const formula = countryConf.shipping_formula;
+        if (!formula) return 0;
+        if (formula.type === "linear") {
+            return (billWeightG / formula.divisor) * formula.coefficient;
+        } else if (formula.type === "tiered") {
+            const firstW = formula.first_weight;
+            const firstP = formula.first_price;
+            const extraPer = formula.extra_per_10g;
+            const unit = formula.unit;
+            if (billWeightG <= firstW) return firstP;
+            const extraG = billWeightG - firstW;
+            const units = Math.ceil(extraG / unit);
+            return firstP + units * extraPer;
+        }
+        return 0;
+    }
+
+    // 渲染界面：重点：美国-海外本地仓 及 供应链 模式下不显示体积重量相关行
+    function renderUI() {
+        const conf = COUNTRY_CONFIG[currentCountry];
+        localCurrencyLabel.innerText = `(${conf.symbol})`;
+        rateInput.value = conf.rate.toFixed(6);
+        if (currentCountry === "美国") {
+            usaMethodContainer.style.display = "block";
+        } else {
+            usaMethodContainer.style.display = "none";
+        }
+
+        let html = '';
+        if (currentCountry === "美国") {
+            html += `<div class="card"><div class="section-title">📌 销售成本 (US)</div>
+                    <div class="row"><label>达人佣金率 (%)</label><div class="input-group"><input type="number" id="usa_comm_rate" value="20.00" step="0.1"></div></div>
+                    <div class="row"><label>其他销售费用</label><div class="input-group"><input type="number" id="usa_other_s" value="10.00" step="0.01"><span class="symbol">¥</span></div></div>
+                    </div>
+                    <div class="card"><div class="section-title">🚚 物流成本 (US)</div>`;
+            
+            // 根据发货方式决定是否显示体积重量模块
+            const showDimWeight = (currentUsaMethod === "跨境自发货（虚拟仓）");
+            if (showDimWeight) {
+                html += renderDimWeightSection(conf.volumetric_factor);
+            }
+            
+            if (currentUsaMethod === "跨境自发货（虚拟仓）") {
+                html += `<div class="row"><label>包材成本</label><div class="input-group"><input type="number" id="usa_pkg" value="10.00" step="0.01"><span class="symbol">¥</span></div></div>
+                         <div class="row"><label>运费单价/KG</label><div class="input-group"><input type="number" id="usa_rate_kg" value="10.00" step="0.01"><span class="symbol">¥</span></div></div>
+                         <div class="row"><label>其它物流费用</label><div class="input-group"><input type="number" id="usa_other_l" value="10.00" step="0.01"><span class="symbol">¥</span></div></div>`;
+            } else if (currentUsaMethod === "海外本地仓（供应链）") {
+                html += `<div class="row"><label>其它物流费用</label><div class="input-group"><input type="number" id="usa_other_l" value="10.00" step="0.01"><span class="symbol">¥</span></div></div>`;
+            } else {
+                // 海外本地仓标准 (无体积重)
+                html += `<div class="row"><label>头程运费</label><div class="input-group"><input type="number" id="usa_log1" value="10.00" step="0.01"><span class="symbol">¥</span></div></div>
+                         <div class="row"><label>尾程运费</label><div class="input-group"><input type="number" id="usa_log2" value="10.00" step="0.01"><span class="symbol">¥</span></div></div>
+                         <div class="row"><label>海外仓服务费</label><div class="input-group"><input type="number" id="usa_log3" value="10.00" step="0.01"><span class="symbol">¥</span></div></div>
+                         <div class="row"><label>其它物流费用</label><div class="input-group"><input type="number" id="usa_other_l" value="10.00" step="0.01"><span class="symbol">¥</span></div></div>`;
             }
             html += `</div>`;
-        } else {
-            // 东南亚和英国国家
-            html += `<div class="card"><div class="section-title">销售与物流成本</div>`;
-            html += renderDimWeightUI(); // 东南亚国家显示计费重量
-            html += `<div class="row"><label>包材成本</label><div class="input-group"><input type="number" id="sea_pkg" value="3.00"><span class="symbol">¥</span></div></div>
-                     <div class="row"><label>国内运费(尾程)</label><div class="input-group"><input type="number" id="sea_dom" value="10.00"><span class="symbol">¥</span></div></div>
-                     <div class="row"><label>跨境物流费(头程)</label><div class="input-group ${conf.fixed_cb ? 'readonly' : ''}"><input type="number" id="sea_cb" value="${conf.fixed_cb || 5.00}" ${conf.fixed_cb ? 'readonly' : ''}><span class="symbol">¥</span></div></div>
-                     <div class="row"><label>佣金比例 (%)</label><div class="input-group"><input type="number" id="sea_comm" value="10.00"></div></div>
-                     <div class="row"><label>手续费率 (%)</label><div class="input-group"><input type="number" id="sea_fee" value="10.00"></div></div></div>`;
+        } 
+        else {
+            // 东南亚/英国/新加坡模式 —— 始终显示体积重量模块，且跨境物流费单位人民币
+            html += `<div class="card"><div class="section-title">📦 销售与物流成本</div>`;
+            html += renderDimWeightSection(conf.volumetric_factor);
+            html += `<div class="row"><label>包材成本</label><div class="input-group"><input type="number" id="sea_pkg" value="3.00" step="0.01"><span class="symbol">¥</span></div></div>
+                     <div class="row"><label>国内运费(尾程)</label><div class="input-group"><input type="number" id="sea_dom" value="10.00" step="0.01"><span class="symbol">¥</span></div></div>
+                     <div class="row"><label>跨境物流费(头程)</label><div class="input-group readonly" id="cbFieldGroup"><input type="text" id="sea_cb" readonly placeholder="自动计算" value="0.00"><span class="symbol" id="cbUnitSymbol">¥</span></div></div>
+                     <div class="row"><label>佣金比例 (%)</label><div class="input-group"><input type="number" id="sea_comm" value="10.00" step="0.1"></div></div>
+                     <div class="row"><label>手续费率 (%)</label><div class="input-group"><input type="number" id="sea_fee" value="10.00" step="0.1"></div></div>
+                     </div>`;
+            const formulaHint = (conf.shipping_formula && conf.shipping_formula.type === 'tiered') ? 
+                `首重${conf.shipping_formula.first_weight}g ${conf.shipping_formula.first_price}${conf.symbol}，续重每${conf.shipping_formula.unit}g加${conf.shipping_formula.extra_per_10g}${conf.symbol} (换算为人民币显示)` :
+                `公式: 物流费(${conf.symbol}) = 计费重量(g) ÷ ${conf.shipping_formula?.divisor || 10} × ${conf.shipping_formula?.coefficient || 0.15} (自动换算为人民币)`;
+            html += `<div class="inline-tip">💡 跨境物流费公式: ${formulaHint}</div>`;
         }
-        fields.innerHTML = html;
-        updateNotes(country, method);
+        dynamicFieldsDiv.innerHTML = html;
+        updateNotes();
+        // 针对美国模式下非虚拟仓场景，确保如果有隐藏的计费重量输入框不会影响计算
+        if (currentCountry === "美国" && currentUsaMethod !== "跨境自发货（虚拟仓）") {
+            // 如果有隐藏的计费重量显示框被渲染？实际上没有渲染，所以无需额外处理，但为了计算逻辑的健壮，设置虚拟值即可。
+        }
     }
 
-    function renderDimWeightUI() {
+    function renderDimWeightSection(factor) {
         return `<div class="row"><label>长x宽x高(cm)</label><div class="dim-box">
-                    <input type="number" id="dimL" value="10" placeholder="长">
-                    <input type="number" id="dimW" value="10" placeholder="宽">
-                    <input type="number" id="dimH" value="10" placeholder="高">
+                    <input type="number" id="dimL" value="10" placeholder="长" step="any">
+                    <input type="number" id="dimW" value="10" placeholder="宽" step="any">
+                    <input type="number" id="dimH" value="10" placeholder="高" step="any">
                 </div></div>
-                <div class="row"><label>实重 (g)</label><div class="input-group"><input type="number" id="weight" value="100"></div></div>
-                <div class="row"><label>计费重量 (g)</label><div class="input-group readonly"><input type="text" id="billWeight" readonly placeholder="自动计算"></div></div>`;
+                <div class="row"><label>实重 (g)</label><div class="input-group"><input type="number" id="actWeight" value="600" step="1"></div></div>
+                <div class="row"><label>计费重量 (g)</label><div class="input-group readonly"><input type="text" id="billWeightDisplay" readonly placeholder="自动计算"><span class="symbol">g</span></div></div>
+                <div class="inline-tip">📐 体积重 = 长×宽×高(cm) / ${factor} × 1000 g</div>`;
     }
 
-    function updateNotes(country, method) {
-        let title = ""; let text = "";
-        if (country === "美国") {
-            if (method === "海外本地仓") {
-                title = "【美国的海外本地仓注释】";
-                text = "成本价：进货价\n销售定价：TikTok Shop显示的价格\n各项手续费-平台抽佣：销售价*6%\n其他销售费用：可包括税费VAT、汇损、货损等，按实际情况填写\n其它物流费用：可包括挂号费、海外本地仓综合服务费等\n毛利：销售定价 - 销售成本 - 物流成本 - 产品成本\n毛利率：毛利/销售定价，一般建议尽量保持在 40% 以上，可以兼顾利润和促销活动空间";
-            } else if (method === "海外本地仓（供应链）") {
-                title = "【美国的海外本地仓（供应链）注释】";
-                text = "成本价：进货价\n销售定价：TikTok Shop显示的价格\n各项手续费-平台抽佣：销售价*6%\n其他销售费用：可包括税费VAT、汇损、货损等，按实际情况填写\n其它物流费用：供应链综合物流费用（含头程/尾程等）\n毛利：销售定价 - 销售成本 - 物流成本 - 产品成本\n毛利率：毛利/销售定价，建议 40% 以上";
+    function updateNotes() {
+        const noteTitleElem = document.getElementById('noteTitle');
+        const noteContentElem = document.getElementById('noteContent');
+        let title = "";
+        let text = "";
+        if (currentCountry === "美国") {
+            if (currentUsaMethod === "海外本地仓") {
+                title = "【美国海外本地仓注释】";
+                text = "成本价：进货价\n销售定价：TikTok Shop显示价格\n平台抽佣：销售价*6%\n其他销售费用：包括税费VAT/汇损/货损等\n其他物流费用：包含挂号费、海外本地仓综合服务费等\n毛利：毛利/销售定价，一般建议尽量保持在 40% 以上，可以兼顾利润和促销活动空间";
+            } else if (currentUsaMethod === "海外本地仓（供应链）") {
+                title = "【美国海外本地仓（供应链）注释】";
+                text = "成本价：进货价\n销售定价：TikTok Shop显示价格\n平台佣金：销售价*6%\n其它物流费用：包括税费VAT/汇损/货损等\n其他物流费用：包含挂号费、海外本地仓综合服务费等\n毛利：毛利/销售定价，一般建议尽量保持在 40% 以上，可以兼顾利润和促销活动空间";
             } else {
-                title = "【美国的跨境自发货（虚拟仓）注释】";
-                text = "成本价：进货价\n销售定价：TikTok Shop显示的价格\n各项手续费-平台抽佣：销售价*6%\n其他销售费用：可包括税费VAT、汇损、货损等，按实际情况填写\n计费重量：取体积重和实重更大的值\n包材成本：快递包装成本\n运费单价/KG：每公斤运费单价\n其它物流费用：可包括挂号费、海外本地仓综合服务费等\n毛利：销售定价 - 销售成本 - 物流成本 - 产品成本\n毛利率：毛利/销售定价，一般建议尽量保持在 40% 以上，可以兼顾利润和促销活动空间";
+                title = "【美国跨境自发货（虚拟仓）注释】";
+                text = "成本价：进货价\n销售定价：TikTok Shop显示价格\n平台抽佣：销售价*6%\n其他销售费用：包括税费VAT/汇损/货损等\n计费重量：取体积重和实重更大的值\n包材成本：快递包装成本\n运费单价/KG：每公斤运费单价\n其它物流费用：可包括挂号费、海外本地仓综合服务费等\n毛利：毛利/销售定价，一般建议尽量保持在 40% 以上";
             }
         } else {
-            title = `【${country} 跨境模式注释】`;
-            text = "成本价：进货价\n销售定价：TikTok Shop显示的价格\n计费重量：取体积重和实重更大的值\n包材成本：快递货代包装成本\n佣金比例：可填写包括达人佣金在内的所有佣金项\n手续费率：可包括税费VAT+小店手续费+汇损、提现、货损等，按实际情况填写\n毛利：销售定价 - 销售成本 - 物流成本 - 产品成本\n毛利率：毛利/销售定价，一般建议尽量保持在 40% 以上，可以兼顾利润和促销活动空间";
+            const conf = COUNTRY_CONFIG[currentCountry];
+            title = `【${currentCountry} 跨境模式注释】`;
+            text = `成本价：进货价\n销售定价：TikTok Shop显示价\n计费重量：取体积重和实重更大的值\n体积重公式：长×宽×高(cm) / ${conf.volumetric_factor} × 1000g\n包材成本：快递货代包装成本\n佣金比例：可填写包括达人佣金在内的所有佣金项\n手续费率：可包括税费VAT+小店手续费+汇损、提现、货损等，按实际情况填写\n毛利：销售定价 - 销售成本 - 物流成本 - 产品成本\n毛利率：毛利/销售定价，一般建议尽量保持在 40% 以上，可以兼顾利润和促销活动空间\n注意：跨境物流费已根据当地运费公式换算为人民币(CNY)显示。`;
         }
-        document.getElementById('noteTitle').innerText = title;
-        document.getElementById('noteContent').innerText = text;
+        noteTitleElem.innerText = title;
+        noteContentElem.innerText = text;
     }
 
-    function calculate() {
+    // 核心计算逻辑：美国非虚拟仓模式下不依赖尺寸重量，虚拟仓和东南亚国家则使用尺寸实重
+    function calculateAll() {
         try {
-            const country = document.getElementById('countrySelect').value;
-            const method = document.getElementById('usaMethod').value;
-            const rate = parseFloat(document.getElementById('rate').value);
+            const conf = COUNTRY_CONFIG[currentCountry];
+            const rate = conf.rate;
             const sellCny = parseFloat(document.getElementById('sellCny').value) || 0;
             const costCny = parseFloat(document.getElementById('costCny').value) || 0;
             
-            let totalCostCny = 0;
-
-            if (country === "美国") {
-                const comm = sellCny * (parseFloat(document.getElementById('usa_comm_rate').value) / 100);
-                const plat = sellCny * 0.06;
-                const withd = sellCny * 0.0022;
-                const otherS = parseFloat(document.getElementById('usa_other_s').value) || 0;
-                
-                let logCny = 0;
-                if (method === "跨境自发货（虚拟仓）") {
-                    const l = parseFloat(document.getElementById('dimL').value) || 0;
-                    const w = parseFloat(document.getElementById('dimW').value) || 0;
-                    const h = parseFloat(document.getElementById('dimH').value) || 0;
-                    const actW = parseFloat(document.getElementById('weight').value) || 0;
-                    const billW = Math.max(actW, (l*w*h)/8);
-                    document.getElementById('billWeight').value = billW.toFixed(2);
-                    logCny = (parseFloat(document.getElementById('u_pkg').value) || 0) + 
-                             ((parseFloat(document.getElementById('u_rate_kg').value) || 0) * (billW/1000)) + 
-                             (parseFloat(document.getElementById('u_other_l').value) || 0);
-                } else if (method === "海外本地仓（供应链）") {
-                    logCny = parseFloat(document.getElementById('u_other_l').value) || 0;
-                } else {
-                    logCny = (parseFloat(document.getElementById('u_log1').value) || 0) + 
-                             (parseFloat(document.getElementById('u_log2').value) || 0) + 
-                             (parseFloat(document.getElementById('u_log3').value) || 0) + 
-                             (parseFloat(document.getElementById('u_other_l').value) || 0);
-                }
-                totalCostCny = comm + plat + withd + otherS + logCny;
+            let billWeight = 0;
+            // 只有在需要体积重计算的场景才去获取尺寸重量
+            const needDimension = (currentCountry !== "美国") || (currentCountry === "美国" && currentUsaMethod === "跨境自发货（虚拟仓）");
+            if (needDimension && document.getElementById('dimL') && document.getElementById('actWeight')) {
+                const l = parseFloat(document.getElementById('dimL')?.value) || 0;
+                const w = parseFloat(document.getElementById('dimW')?.value) || 0;
+                const h = parseFloat(document.getElementById('dimH')?.value) || 0;
+                const actW = parseFloat(document.getElementById('actWeight')?.value) || 0;
+                const factor = conf.volumetric_factor || 8000;
+                const volW = calcVolumetricWeight(l, w, h, factor);
+                billWeight = Math.max(actW, volW);
+                if (document.getElementById('billWeightDisplay')) document.getElementById('billWeightDisplay').value = billWeight.toFixed(2);
             } else {
-                const l = parseFloat(document.getElementById('dimL').value) || 0;
-                const w = parseFloat(document.getElementById('dimW').value) || 0;
-                const h = parseFloat(document.getElementById('dimH').value) || 0;
-                const actW = parseFloat(document.getElementById('weight').value) || 0;
-                const billW = Math.max(actW, (l*w*h)/8);
-                document.getElementById('billWeight').value = billW.toFixed(2);
-                const commP = sellCny * (parseFloat(document.getElementById('sea_comm').value) / 100);
-                const feeP = sellCny * (parseFloat(document.getElementById('sea_fee').value) / 100);
-                totalCostCny = (parseFloat(document.getElementById('sea_pkg').value) || 0) + 
-                               (parseFloat(document.getElementById('sea_dom').value) || 0) + 
-                               (parseFloat(document.getElementById('sea_cb').value) || 0) + 
-                               commP + feeP;
+                // 美国非虚拟仓模式：设置计费重量为0，不影响物流费计算（物流费单独字段）
+                if (document.getElementById('billWeightDisplay')) document.getElementById('billWeightDisplay').value = "无需计费重量";
             }
-
+            
+            let totalCostCny = 0;
+            if (currentCountry === "美国") {
+                const commRate = parseFloat(document.getElementById('usa_comm_rate')?.value) || 0;
+                const comm = sellCny * (commRate / 100);
+                const plat = sellCny * 0.06;
+                const withdraw = sellCny * 0.0022;
+                const otherS = parseFloat(document.getElementById('usa_other_s')?.value) || 0;
+                let logisticsCny = 0;
+                if (currentUsaMethod === "跨境自发货（虚拟仓）") {
+                    const pkg = parseFloat(document.getElementById('usa_pkg')?.value) || 0;
+                    const rateKg = parseFloat(document.getElementById('usa_rate_kg')?.value) || 0;
+                    const otherL = parseFloat(document.getElementById('usa_other_l')?.value) || 0;
+                    logisticsCny = pkg + (rateKg * (billWeight / 1000)) + otherL;
+                } else if (currentUsaMethod === "海外本地仓（供应链）") {
+                    logisticsCny = parseFloat(document.getElementById('usa_other_l')?.value) || 0;
+                } else {
+                    const log1 = parseFloat(document.getElementById('usa_log1')?.value) || 0;
+                    const log2 = parseFloat(document.getElementById('usa_log2')?.value) || 0;
+                    const log3 = parseFloat(document.getElementById('usa_log3')?.value) || 0;
+                    const otherL = parseFloat(document.getElementById('usa_other_l')?.value) || 0;
+                    logisticsCny = log1 + log2 + log3 + otherL;
+                }
+                totalCostCny = comm + plat + withdraw + otherS + logisticsCny;
+            } 
+            else {
+                const pkgCny = parseFloat(document.getElementById('sea_pkg')?.value) || 0;
+                const domCny = parseFloat(document.getElementById('sea_dom')?.value) || 0;
+                const commRate = parseFloat(document.getElementById('sea_comm')?.value) || 0;
+                const feeRate = parseFloat(document.getElementById('sea_fee')?.value) || 0;
+                const shippingLocal = calcShippingLocal(billWeight, conf);
+                const shippingCny = shippingLocal * rate;
+                const seaCbInput = document.getElementById('sea_cb');
+                if (seaCbInput) {
+                    seaCbInput.value = shippingCny.toFixed(2);
+                    const unitSpan = document.getElementById('cbUnitSymbol');
+                    if (unitSpan) unitSpan.innerText = '¥';
+                }
+                const commCost = sellCny * (commRate / 100);
+                const feeCost = sellCny * (feeRate / 100);
+                totalCostCny = pkgCny + domCny + shippingCny + commCost + feeCost;
+            }
+            
             const profitCny = sellCny - costCny - totalCostCny;
-            const revCny = sellCny - totalCostCny;
-            const margin = (sellCny !== 0) ? (profitCny / sellCny * 100) : 0;
-
-            document.getElementById('resRev').value = revCny.toFixed(2);
+            const revenueCny = sellCny - totalCostCny;
+            const margin = (sellCny !== 0) ? (profitCny / sellCny) * 100 : 0;
+            document.getElementById('resRevenue').value = revenueCny.toFixed(2);
             document.getElementById('resProfit').value = profitCny.toFixed(2);
-            document.getElementById('resMargin').innerText = margin.toFixed(2) + " %";
-
-        } catch (e) {
-            alert("计算错误，请检查数字输入是否完整");
+            document.getElementById('resMargin').innerHTML = margin.toFixed(2) + " %";
+        } catch (err) {
+            console.error(err);
+            alert("计算错误: 请检查所有数值是否填写完整且合法");
         }
     }
 
-    window.onload = initUI;
+    function onCountryChange() {
+        currentCountry = countrySelect.value;
+        if (currentCountry === "美国") {
+            currentUsaMethod = usaMethodSelect.value;
+        } else {
+            currentUsaMethod = "海外本地仓";
+        }
+        renderUI();
+        setTimeout(() => calculateAll(), 30);
+    }
+    
+    function onUsaMethodChange() {
+        if (currentCountry === "美国") {
+            currentUsaMethod = usaMethodSelect.value;
+            renderUI();
+            setTimeout(() => calculateAll(), 20);
+        }
+    }
+
+    countrySelect.addEventListener('change', onCountryChange);
+    usaMethodSelect.addEventListener('change', onUsaMethodChange);
+    fetchBtn.addEventListener('click', async () => {
+        await fetchExchangeRate();
+        calculateAll();
+    });
+    calcBtn.addEventListener('click', calculateAll);
+    document.addEventListener('input', (e) => {
+        if (e.target.matches('input') && !e.target.readOnly) {
+            calculateAll();
+        }
+    });
+    
+    function init() {
+        currentCountry = "美国";
+        currentUsaMethod = "海外本地仓";
+        countrySelect.value = "美国";
+        usaMethodSelect.value = "海外本地仓";
+        renderUI();
+        calculateAll();
+    }
+    init();
 </script>
-
 </body>
-
 </html>
